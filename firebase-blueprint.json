@@ -1,0 +1,292 @@
+{
+  "entities": {
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized platform administrator with access to the admin dashboard, course creation, and participant analytics.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the administrator",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified administrator email address",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Administrator full name",
+          "minLength": 2,
+          "maxLength": 150
+        },
+        "role": {
+          "type": "string",
+          "description": "Administrative role identifier",
+          "enum": ["super_admin", "admin"],
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["uid", "email", "fullName", "role", "createdAt"]
+    },
+    "PublishedCourseSummary": {
+      "title": "PublishedCourseSummary",
+      "description": "Publicly visible training card and metadata in the Capacitaciones library (contains no correct answer keys or private participant data).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Course unique identifier",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "slug": {
+          "type": "string",
+          "description": "Public URL slug for /formacion/{slug}",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Training title",
+          "minLength": 2,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief training description",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "category": {
+          "type": "string",
+          "description": "Training topic or category",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "level": {
+          "type": "string",
+          "description": "Training difficulty level",
+          "enum": ["Básico", "Intermedio", "Avanzado"],
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "estimatedMinutes": {
+          "type": "number",
+          "description": "Estimated duration in minutes"
+        },
+        "totalModules": {
+          "type": "number",
+          "description": "Number of modules in the training"
+        },
+        "passingScore": {
+          "type": "number",
+          "description": "Minimum passing score percentage"
+        },
+        "status": {
+          "type": "string",
+          "description": "Publication status",
+          "enum": ["draft", "published", "archived"],
+          "minLength": 5,
+          "maxLength": 20
+        },
+        "coverImageUrl": {
+          "type": "string",
+          "description": "Cover image URL or data URI",
+          "minLength": 1,
+          "maxLength": 200000
+        },
+        "authorUid": {
+          "type": "string",
+          "description": "Admin UID who created or updated the course",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "slug",
+        "title",
+        "description",
+        "category",
+        "level",
+        "estimatedMinutes",
+        "totalModules",
+        "passingScore",
+        "status",
+        "coverImageUrl",
+        "authorUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ParticipantRecord": {
+      "title": "ParticipantRecord",
+      "description": "Isolated participant record (fullName, identificationNumber, area, role) accessible only to administrators.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Participant UUID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Participant full name",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "identificationNumber": {
+          "type": "string",
+          "description": "Participant identification number (Cédula)",
+          "minLength": 3,
+          "maxLength": 40
+        },
+        "area": {
+          "type": "string",
+          "description": "Participant organizational area",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "Participant job title/role (Cargo)",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Registration timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "fullName",
+        "identificationNumber",
+        "area",
+        "role",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CourseParticipationSession": {
+      "title": "CourseParticipationSession",
+      "description": "Administrative record of a participant's course session, score, strengths, and areas to improve.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Session UUID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "participantId": {
+          "type": "string",
+          "description": "Reference to ParticipantRecord ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "courseId": {
+          "type": "string",
+          "description": "Reference to Course ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "scorePercentage": {
+          "type": "number",
+          "description": "Score percentage obtained (0-100)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Session status",
+          "enum": [
+            "Registrado",
+            "En progreso",
+            "Finalizado",
+            "Aprobado",
+            "Requiere refuerzo",
+            "Abandonado"
+          ],
+          "minLength": 4,
+          "maxLength": 40
+        },
+        "totalDurationSeconds": {
+          "type": "number",
+          "description": "Elapsed time in seconds"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Session start timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Session update timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "participantId",
+        "courseId",
+        "scorePercentage",
+        "status",
+        "totalDurationSeconds",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": "AdminUser",
+      "description": "Stores authorized platform administrators."
+    },
+    "/courses/{courseId}": {
+      "schema": "PublishedCourseSummary",
+      "description": "Stores training catalog metadata. Public participants can only read courses where status == 'published'. Only verified administrators can create, update, or delete courses."
+    },
+    "/participants/{participantId}": {
+      "schema": "ParticipantRecord",
+      "description": "Stores participant personal and organizational data (Cédula, Nombre, Área, Cargo). Strictly isolated to administrators."
+    },
+    "/participant_sessions/{sessionId}": {
+      "schema": "CourseParticipationSession",
+      "description": "Stores course participation attempts, scores, and progress. Strictly isolated to administrators so public participants cannot view other participants' results."
+    }
+  }
+}

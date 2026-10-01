@@ -1,0 +1,210 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Pillar 3: Reusable Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'gomezramosmanuel@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isVerifiedUser() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Validation Blueprints (Pillar 2: Anti-Update-Gap)
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'fullName', 'role', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'fullName', 'role', 'createdAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 254 &&
+        data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 150 &&
+        data.role in ['super_admin', 'admin'] &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPublishedCourseSummary(data) {
+      return data.keys().hasAll([
+          'id', 'slug', 'title', 'description', 'category', 'level',
+          'estimatedMinutes', 'totalModules', 'passingScore', 'status',
+          'coverImageUrl', 'authorUid', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'slug', 'title', 'description', 'category', 'level',
+          'estimatedMinutes', 'totalModules', 'passingScore', 'status',
+          'coverImageUrl', 'authorUid', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 128 && data.slug.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 200 &&
+        data.description is string && data.description.size() >= 1 && data.description.size() <= 2000 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 120 &&
+        data.level in ['Básico', 'Intermedio', 'Avanzado'] &&
+        data.estimatedMinutes is number && data.estimatedMinutes >= 1 && data.estimatedMinutes <= 600 &&
+        data.totalModules is number && data.totalModules >= 1 && data.totalModules <= 100 &&
+        data.passingScore is number && data.passingScore >= 0 && data.passingScore <= 100 &&
+        data.status in ['draft', 'published', 'archived'] &&
+        data.coverImageUrl is string && data.coverImageUrl.size() >= 1 && data.coverImageUrl.size() <= 200000 &&
+        data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128 &&
+        data.authorUid == request.auth.uid &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidParticipantRecord(data) {
+      return data.keys().hasAll([
+          'id', 'fullName', 'identificationNumber', 'area', 'role', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'fullName', 'identificationNumber', 'area', 'role', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 160 &&
+        data.identificationNumber is string && data.identificationNumber.size() >= 3 && data.identificationNumber.size() <= 40 &&
+        data.area is string && data.area.size() >= 1 && data.area.size() <= 120 &&
+        data.role is string && data.role.size() >= 1 && data.role.size() <= 120 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCourseParticipationSession(data) {
+      return data.keys().hasAll([
+          'id', 'participantId', 'courseId', 'scorePercentage', 'status',
+          'totalDurationSeconds', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'participantId', 'courseId', 'scorePercentage', 'status',
+          'totalDurationSeconds', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.participantId is string && data.participantId.size() >= 1 && data.participantId.size() <= 128 && data.participantId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.courseId is string && data.courseId.size() >= 1 && data.courseId.size() <= 128 && data.courseId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.scorePercentage is number && data.scorePercentage >= 0 && data.scorePercentage <= 100 &&
+        data.status in ['Registrado', 'En progreso', 'Finalizado', 'Aprobado', 'Requiere refuerzo', 'Abandonado'] &&
+        data.totalDurationSeconds is number && data.totalDurationSeconds >= 0 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // 1. /admins/{adminId}
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && isAdmin();
+      allow list: if isAdmin() && resource.data.role in ['super_admin', 'admin'];
+      allow create: if isValidId(adminId) &&
+        isValidAdminUser(incoming()) &&
+        incoming().uid == adminId &&
+        incoming().createdAt == request.time &&
+        isBootstrappedAdmin();
+      allow update: if isValidAdminUser(incoming()) &&
+        isValidId(adminId) &&
+        isBootstrappedAdmin() &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'role']);
+      allow delete: if isValidId(adminId) && isBootstrappedAdmin();
+    }
+
+    // 2. /courses/{courseId}
+    match /courses/{courseId} {
+      allow get: if isValidId(courseId) && (resource.data.status == 'published' || isAdmin());
+      allow list: if resource.data.status == 'published' || isAdmin();
+      allow create: if isValidId(courseId) &&
+        isValidPublishedCourseSummary(incoming()) &&
+        incoming().id == courseId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isValidPublishedCourseSummary(incoming()) &&
+        isValidId(courseId) &&
+        isAdmin() &&
+        incoming().id == existing().id &&
+        incoming().authorUid == existing().authorUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'slug', 'title', 'description', 'category', 'level',
+            'estimatedMinutes', 'totalModules', 'passingScore', 'status',
+            'coverImageUrl', 'updatedAt'
+          ]) || isAdmin()
+        );
+      allow delete: if isValidId(courseId) && isAdmin();
+    }
+
+    // 3. /participants/{participantId} (Strictly Admin-Only PII Isolation)
+    match /participants/{participantId} {
+      allow get: if isValidId(participantId) && isAdmin();
+      allow list: if isAdmin() && resource.data.id is string;
+      allow create: if isValidId(participantId) &&
+        isValidParticipantRecord(incoming()) &&
+        incoming().id == participantId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isValidParticipantRecord(incoming()) &&
+        isValidId(participantId) &&
+        isAdmin() &&
+        incoming().id == existing().id &&
+        incoming().identificationNumber == existing().identificationNumber &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'area', 'role', 'updatedAt']);
+      allow delete: if isValidId(participantId) && isAdmin();
+    }
+
+    // 4. /participant_sessions/{sessionId} (Strictly Admin-Only Analytics & Results Isolation)
+    match /participant_sessions/{sessionId} {
+      allow get: if isValidId(sessionId) && isAdmin();
+      allow list: if isAdmin() && resource.data.id is string;
+      allow create: if isValidId(sessionId) &&
+        isValidCourseParticipationSession(incoming()) &&
+        incoming().id == sessionId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin() &&
+        exists(/databases/$(database)/documents/participants/$(incoming().participantId)) &&
+        exists(/databases/$(database)/documents/courses/$(incoming().courseId));
+      allow update: if isValidCourseParticipationSession(incoming()) &&
+        isValidId(sessionId) &&
+        isAdmin() &&
+        incoming().id == existing().id &&
+        incoming().participantId == existing().participantId &&
+        incoming().courseId == existing().courseId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (existing().status in ['Registrado', 'En progreso'] &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['scorePercentage', 'status', 'totalDurationSeconds', 'updatedAt'])) ||
+          isAdmin()
+        );
+      allow delete: if isValidId(sessionId) && isAdmin();
+    }
+  }
+}

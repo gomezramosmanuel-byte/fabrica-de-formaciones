@@ -1,0 +1,6 @@
+{
+  "name": "Fábrica Inteligente de Formación",
+  "description": "Plataforma LMS corporativa e interactiva para crear, publicar, ejecutar y analizar experiencias formativas técnicas y operativas con analítica de brechas por competencia y asistencia IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
